@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: name-generator-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: name-generator-service
+  template:
+    metadata:
+      labels:
+        app: name-generator-service
+    spec:
+      containers:
+      - name: name-generator-service
+        image: quay.io/kruize/name-generator-service
+        ports:
+        - containerPort: 8080
+        env:
+        - name: JAEGER_AGENT_HOST
+          value: jaeger-agent
+        - name: JAEGER_AGENT_PORT
+          value: "6831"
+        - name: scientist_service_prefix_url
+          value: http://scientist-name-generator-service:8090
+        - name: animal_service_prefix_url
+          value: http://animal-name-generator-service:9000
+        - name: UDP_HOST 
+          value: jaeger.default.svc.cluster.local   
+      imagePullSecrets:
+        - name: quaysecret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: name-generator-service
+spec:
+  selector:
+    app: name-generator-service
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  type: NodePort

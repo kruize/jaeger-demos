@@ -1,0 +1,70 @@
+version: "3.4"
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:1.45
+    ports:
+      - 9090:16686
+      - 6831:6831/udp
+      - 5775:5775/udp
+      - 6832:6832/udp
+      - 5778:5778
+      - 16686:16686
+      - 14268:14268
+      - 9411:9411
+      - 14250:14250
+  
+  prometheus:
+    labels:
+      - "security.selinux.options=z"
+    image: prom/prometheus:v2.39.2
+    container_name: prometheus
+    hostname: prometheus
+    command:
+      - --config.file=/etc/prometheus.yaml
+      - --web.enable-remote-write-receiver
+      - --enable-feature=exemplar-storage
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus.yaml:z
+    ports:
+      - "8888:9090"
+    healthcheck:
+      interval: 5s
+      retries: 10
+
+  collector:
+    labels:
+      - "security.selinux.options=z"
+    image: otel/opentelemetry-collector:latest
+    container_name: collector
+    hostname: collector
+    depends_on:
+      jaeger:
+        condition: service_healthy
+    command: ["--config=/etc/otelcol/config/config.yaml"]
+    volumes:
+      - ./collector-config-local.yaml:/etc/otelcol/config/config.yaml:z
+    ports:
+      - "5555:5555"
+      - "6666:6666"
+  
+  grafana:
+    labels:
+      - "security.selinux.options=z"
+    image: grafana/grafana:9.2.2
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    container_name: grafana
+    hostname: grafana 
+    volumes:
+      - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:z
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    ports:
+      - "3000:3000"
+    healthcheck:
+      interval: 5s
+      retries: 10
+      test: wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1
