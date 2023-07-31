@@ -63,6 +63,10 @@ trap 'kill_processes; kill_agent' EXIT
 for dir in "${directories[@]}"
 do
     cd "demo-source/$dir"
+    pushd src/main/resources 
+    echo -e "\nspring.application.name=${dir}" >> application.properties
+    popd
+    
     mvn clean package -Dmaven.test.skip=true
     java -javaagent:../../${AGENT_FILE} -jar target/${dir}-0.0.1-SNAPSHOT.jar &
     # Store the PID of the background process
