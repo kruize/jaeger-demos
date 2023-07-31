@@ -1,9 +1,11 @@
-# opentracing-microservices-example
+# Opentelemetry Demo
+This Demo instruments the microservices springboot application using opentelemetry and collects the associated traces to Jaeger and metrics to Prometheus which can be further visualized in grafana dashboard.
 
-The source code for demo application can be found here[Jaeger Integration With Spring Boot Application](https://medium.com/xebia-engineering/jaeger-integration-with-spring-boot-application-3c6ec4a96a6f).
+Here we are using opentelemetry blackbox instrumentation mechanism as mentioned in this [blog](https://community.aws/tutorials/instrumenting-java-apps-using-opentelemetry#introduction).
 
+## Deploy Jaeger, prometheus, grafana, opentelemetry-collector 
 
-## Run the docker-compose file to bring up containers
+- Run the docker-compose file to bring up Jaeger, prometheus, grafana, opentelemetry-collector containers.
 
 ```
 podman-compose up
@@ -12,27 +14,35 @@ docker compose up
 ```
 wait for containers to come up
 
-## Run the shell script to bring up microservices with opentelemetry agent
+## Build and run the microservices application with opentelemetry instrumentation 
+
+Run the shell script to build and bring up the microservices with opentelemetry agent that is downloaded from [here](https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar).
+
+
 On one another tab run the following
 ```
-./run.sh
+./opentelemetry_demo.sh
 ```
-## To put Load on the microservices
+
+## Run Payload
 
 ```
 ./load.sh
 ```
 
-- To access the metrics go to grafana dashboard and select expore tab:
+You can browse the applications at following endpoints:
+
+Jaeger UI: http://localhost:9090/
+prometheus: http://localhost:8888/
+grafana dashboard: http://localhost:3000/
+Demo application: http://localhost:8080/api/v1/names/random
+
+To access the metrics follow the below steps:
+- Go to grafana dashboard and select explore tab.
 - Select prometheus in the dropdown.
 - You can query the available metrics.
 
-you can browse the applications at following endpoints:
 
-Jaeger: http://localhost:9090/
-prometheus: http://localhost:8888/
-grafana: http://localhost:3000/
-Demo application: http://localhost:8080/api/v1/names/random
 
 
 

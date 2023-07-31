@@ -1,9 +1,8 @@
-# Jaeger Minikube Dependency Demo
-This demo is a small setup which connectes jaeger with a demo application and prints out dependencies of mircoservices in kruize log.
+# Jaeger Demo
+This demo instruments a microservices springboot application using Jaeger to fetch the dependecies using Jaeger [API](https://www.jaegertracing.io/docs/1.23/apis/#service-dependencies-graph-internal).
 
-# Clone demo application and build docker images  
-"one time setup"
-- we will first clone the demo repository.
+# How to build the demo application docker images?  
+- Clone the microservices application.
 
 ```
 git clone git@github.com:himankbatra/opentracing-microservices-example.git
@@ -14,27 +13,30 @@ git clone git@github.com:himankbatra/opentracing-microservices-example.git
 cd opentracing-microservices-example
 ```  
 
-## Changing the application.properties
+## Update the application.properties
 
-We need to navigate to each of the 3 services folders and change the variable called *opentracing.jaeger.udp-sender.host* present in application.properties file.
+We need to navigate to each of the 3 services folders and change the value of the property called *opentracing.jaeger.udp-sender.host* present in application.properties file.
 
 navigate to: 
 - animal-name-service/src/main/resources
 - scientist-name-service/src/main/resources/
 - name-generator-service/src/main/resources/
 
-and open the application.properties file
+and update the application.properties file as below
 
-Change the variable to:
+Update the property to:
 opentracing.jaeger.udp-sender.host=${UDP_HOST}
 
-And add the following variable according to services(this is required for Jaeger UI)
-spring.application.name=name-generator-service/scientist-name-service/name-generator-service
+And add the following property according to services(this is required for Jaeger UI)
+spring.application.name= <Name of the microservice>
 
+for example if the microservice is name-generator-service then the property will be:
 
-We populate this variable through yaml files 
+spring.application.name=name-generator-service
 
-Once we saved the changes to all these files we will build the image for all three services one by one.
+We populate ${UDP_HOST} variable through yaml files in kubernetes resources folder.
+
+Once we save the changes to all these files we will build the image for all three services one by one.
 
 ## Build image for name-generator-service
 
@@ -71,29 +73,37 @@ you can use the name of the images pushed in various yaml files provided(can cha
 
 Repeate the build process for all the remaining services.(just need to change the name of services in the above command)
 
-# Minikube setup
-- Start minikube with 
+**NOTE**- Building this docker images is a one time setup.
+
+# What setup is required?
+Install minikube and kubectl.
+
+
+# Deploying the Jaeger and demo microservices on minikube.
+
+- Deploy Jaeger all in one image and microservices application into minikube:
 
 ```
-minikube start 
+kubectl apply -f kubernetes-resources    
 ```
 
-- In the current directory apply all the files to deploy setup:
-
-```
-kubectl apply -f minikube-resources    
-```
-
-# Resuts
+# How to access the Jaeger API dependencies.
 
 - Get the minikube ip
 ```
 minikube ip
 ```
 
-- We can find all associated nodeports using the follwoing command:
+- We can find all associated nodeports using the following command:
 ```
 kubectl get svc
+```
+
+First access the application endpoint:
+```
+http://<minikube ip>:<node port assigned to name generator service>/api/v1/names/random
+
+ex:http://192.168.49.2:31190/api/v1/names/random
 ```
 
 To browse the jaeger UI:
@@ -103,13 +113,6 @@ To browse the jaeger UI:
 ex:http://192.168.49.2:30580/
 ```
 
-To Access the application:
-```
-http://<minikube ip>:<node port assigned to name generator service>/api/v1/names/random
-
-ex:http://192.168.49.2:31190/api/v1/names/random
-```
-
 To see the dependencies:
 ```
 <minikube ip>:<node port assigned to jaeger 16686>/api/dependencies?endTs=<current time stamp>&lookback=604800000
@@ -117,7 +120,7 @@ To see the dependencies:
 example: http://192.168.49.2:30580/api/dependencies?endTs=1690274788249&lookback=604800000
 ```
 
-Best way to see the results without calculations would be to open Jaeger Ui from above given steps and the open dependencies. open the network tab from developertools and see the api call to watch the usage of api.
+Best way to see the results without calculations would be to open Jaeger UI using the link mentioned above. Open the network tab from developertools and see the API call to watch the usage of API.
 
 *endTs*=1690189974936
 *Value*: 1690189974936
